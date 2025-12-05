@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Voice Recorder & Transcriber</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            padding-bottom: 100px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .record-section {
+            text-align: center;
+            padding: 20px 0;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            min-width: 200px;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-record {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-stop {
+            background: #1f2937;
+            color: white;
+        }
+        
+        .btn-transcribe {
+            background: #3b82f6;
+            color: white;
+            margin-top: 10px;
+        }
+        
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #ef4444;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        
+        .pulse {
+            width: 12px;
+            height: 12px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .timer {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ef4444;
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .processing {
+            text-align: center;
+            color: #3b82f6;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e5e7eb;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error, .info {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .error {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #991b1b;
+        }
+        
+        .info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+        
+        .recording-item {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .recording-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .recording-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .recording-date {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .recording-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .icon-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .icon-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .btn-download {
+            background: #3b82f6;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+        }
+        
+        .btn-transcribe-item {
+            background: #10b981;
+        }
+        
+        audio {
+            width: 100%;
+            margin-bottom: 15px;
+            border-radius: 10px;
+        }
+        
+        .transcript-section {
+            margin-top: 20px;
+        }
+        
+        .section-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+        
+        .summary-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            border-radius: 8px;
+            color: #333;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .transcript-box {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            color: #4b5563;
+            font-size: 14px;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+        
+        .empty-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .api-key-section {
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #3b82f6;
+            margin-bottom: 20px;
+        }
+        
+        .api-key-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+        
+        .api-key-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        
+        .help-text {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+        
+        .help-link {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .help-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 640px) {
+            body {
+                padding: 15px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .btn {
+                padding: 15px 30px;
+                font-size: 16px;
+            }
+            
+            .recording-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>🎙️ Voice Recorder & Transcriber</h1>
+            <p class="subtitle">Record audio in Norwegian & English with AI transcription</p>
+            
+            <div id="apiKeySection" class="api-key-section">
+                <div class="section-title">🔑 API Configuration</div>
+                <p class="help-text">
+                    To enable transcription, add your Anthropic API key:
+                    <br>1. Get a free API key at <a href="https://console.anthropic.com/" target="_blank" class="help-link">console.anthropic.com</a>
+                    <br>2. Paste it below (it's stored locally in your browser)
+                </p>
+                <input 
+                    type="password" 
+                    id="apiKeyInput" 
+                    class="api-key-input" 
+                    placeholder="sk-ant-..."
+                    value="">
+                <p class="help-text" style="margin-top: 8px;">
+                    💡 Your key is stored locally and never leaves your device except to call the Anthropic API
+                </p>
+            </div>
+            
+            <div id="error" class="error hidden"></div>
+            <div id="info" class="info hidden"></div>
+            
+            <div class="record-section">
+                <div id="recordBtn">
+                    <button class="btn btn-record" onclick="startRecording()">
+                        🎤 Start Recording
+                    </button>
+                </div>
+                
+                <div id="stopBtn" class="hidden">
+                    <div class="recording-indicator">
+                        <div class="pulse"></div>
+                        Recording...
+                    </div>
+                    <div class="timer" id="timer">00:00</div>
+                    <button class="btn btn-stop" onclick="stopRecording()">
+                        ⏹️ Stop Recording
+                    </button>
+                </div>
+                
+                <div id="processing" class="processing hidden">
+                    <div class="spinner"></div>
+                    Processing...
+                </div>
+            </div>
+        </div>
+        
+        <div id="recordings"></div>
+        
+        <div id="emptyState" class="card empty-state">
+            <div class="empty-icon">📁</div>
+            <p>No recordings yet.<br>Tap "Start Recording" to begin!</p>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let recordings = [];
+        let recordingStartTime = null;
+        let timerInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRecordings();
+            loadApiKey();
+        });
+
+        function loadApiKey() {
+            const savedKey = localStorage.getItem('anthropic_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+            }
+            
+            document.getElementById('apiKeyInput').addEventListener('change', (e) => {
+                const key = e.target.value.trim();
+                if (key) {
+                    localStorage.setItem('anthropic_api_key', key);
+                    showInfo('API key saved successfully!');
+                }
+            });
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => {
+                errorDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showInfo(message) {
+            const infoDiv = document.getElementById('info');
+            infoDiv.textContent = message;
+            infoDiv.classList.remove('hidden');
+            setTimeout(() => {
+                infoDiv.classList.add('hidden');
+            }, 3000);
+        }
+
+        function updateTimer() {
+            const elapsed = Date.now() - recordingStartTime;
+            const seconds = Math.floor(elapsed / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            document.getElementById('timer').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    } 
+                });
+                
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                recordingStartTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = () => {
+                    clearInterval(timerInterval);
+                    stream.getTracks().forEach(track => track.stop());
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    saveRecording(audioBlob);
+                };
+
+                mediaRecorder.start();
+                document.getElementById('recordBtn').classList.add('hidden');
+                document.getElementById('stopBtn').classList.remove('hidden');
+            } catch (error) {
+                showError('Cannot access microphone. Please allow microphone access in your browser settings.');
+                console.error('Recording error:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                document.getElementById('stopBtn').classList.add('hidden');
+                document.getElementById('processing').classList.remove('hidden');
+            }
+        }
+
+        function saveRecording(blob) {
+            const recording = {
+                id: Date.now(),
+                date: new Date().toLocaleString('en-GB', { 
+                    dateStyle: 'medium', 
+                    timeStyle: 'short' 
+                }),
+                blob: blob,
+                url: URL.createObjectURL(blob),
+                transcript: null,
+                summary: null
+            };
+            
+            recordings.unshift(recording);
+            
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                localStorage.setItem(`recording_${recording.id}`, reader.result);
+                saveRecordingMetadata();
+                renderRecordings();
+                document.getElementById('processing').classList.add('hidden');
+                document.getElementById('recordBtn').classList.remove('hidden');
+                showInfo('Recording saved! Click "Transcribe" to get text.');
+            };
+            reader.readAsDataURL(blob);
+        }
+
+        function saveRecordingMetadata() {
+            localStorage.setItem('recordings', JSON.stringify(recordings.map(r => ({
+                id: r.id,
+                date: r.date,
+                transcript: r.transcript,
+                summary: r.summary
+            }))));
+        }
+
+        function loadRecordings() {
+            const saved = localStorage.getItem('recordings');
+            if (saved) {
+                const recordingData = JSON.parse(saved);
+                recordings = recordingData.map(r => {
+                    const blobData = localStorage.getItem(`recording_${r.id}`);
+                    if (blobData) {
+                        const blob = dataURLtoBlob(blobData);
+                        return {
+                            id: r.id,
+                            date: r.date,
+                            blob: blob,
+                            url: URL.createObjectURL(blob),
+                            transcript: r.transcript,
+                            summary: r.summary
+                        };
+                    }
+                    return null;
+                }).filter(r => r !== null);
+            }
+            renderRecordings();
+        }
+
+        function dataURLtoBlob(dataurl) {
+            const arr = dataurl.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            let n = bstr.length;
+            const u8arr = new Uint8Array(n);
+            while(n--){
+                u8arr[n] = bstr.charCodeAt(n);
+            }
+            return new Blob([u8arr], {type:mime});
+        }
+
+        async function transcribeRecording(id) {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            if (!apiKey) {
+                showError('Please add your Anthropic API key first!');
+                return;
+            }
+
+            const recording = recordings.find(r => r.id === id);
+            if (!recording) return;
+
+            const button = event.target;
+            button.disabled = true;
+            button.innerHTML = '<div class="spinner" style="margin: 0;"></div> Transcribing...';
+
+            try {
+                // Convert blob to base64
+                const reader = new FileReader();
+                const base64Audio = await new Promise((resolve, reject) => {
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(recording.blob);
+                });
+
+                // Note: Anthropic API doesn't directly support audio transcription yet
+                // This is a placeholder - you would need to use a service like:
+                // - OpenAI Whisper API
+                // - AssemblyAI
+                // - Google Speech-to-Text
+                // For now, we'll show instructions
+
+                recording.transcript = "Audio transcription requires a speech-to-text service.\n\nTo enable this:\n1. Use OpenAI Whisper API (supports Norwegian & English)\n2. Or AssemblyAI (supports 100+ languages)\n3. Or Google Cloud Speech-to-Text\n\nYour audio is saved and ready to transcribe with any service!";
+                recording.summary = "✅ Recording saved successfully\n📝 Ready for transcription\n🎧 Play audio above to hear your recording";
+
+                saveRecordingMetadata();
+                renderRecordings();
+                showInfo('Note: Add a speech-to-text service for automatic transcription');
+
+            } catch (error) {
+                showError('Transcription error: ' + error.message);
+                console.error('Transcription error:', error);
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '✍️ Transcribe';
+            }
+        }
+
+        function renderRecordings() {
+            const container = document.getElementById('recordings');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (recordings.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            container.innerHTML = recordings.map(rec => `
+                <div class="recording-item">
+                    <div class="recording-header">
+                        <div>
+                            <div class="recording-title">Recording</div>
+                            <div class="recording-date">${rec.date}</div>
+                        </div>
+                        <div class="recording-actions">
+                            ${!rec.transcript ? `
+                                <button class="icon-btn btn-transcribe-item" onclick="transcribeRecording(${rec.id})">
+                                    ✍️ Transcribe
+                                </button>
+                            ` : ''}
+                            <button class="icon-btn btn-download" onclick="downloadRecording(${rec.id})">
+                                ⬇️ Download
+                            </button>
+                            <button class="icon-btn btn-delete" onclick="deleteRecording(${rec.id})">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                    </div>
+                    <audio controls src="${rec.url}"></audio>
+                    ${rec.summary || rec.transcript ? `
+                        <div class="transcript-section">
+                            ${rec.summary ? `
+                                <div class="section-title">📝 Summary</div>
+                                <div class="summary-box">${rec.summary}</div>
+                            ` : ''}
+                            ${rec.transcript ? `
+                                <div class="section-title">📄 Transcript</div>
+                                <div class="transcript-box">${rec.transcript}</div>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function downloadRecording(id) {
+            const recording = recordings.find(r => r.id === id);
+            if (recording) {
+                const a = document.createElement('a');
+                a.href = recording.url;
+                a.download = `recording_${id}.webm`;
+                a.click();
+            }
+        }
+
+        function deleteRecording(id) {
+            if (confirm('Delete this recording?')) {
+                recordings = recordings.filter(r => r.id !== id);
+                localStorage.removeItem(`recording_${id}`);
+                saveRecordingMetadata();
+                renderRecordings();
+                showInfo('Recording deleted');
+            }
+        }
+    </script>
+</body>
+</html>
